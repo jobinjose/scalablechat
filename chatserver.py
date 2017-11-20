@@ -47,7 +47,7 @@ class Client_Thread(Thread):
         self.socket = socket
         self.ip = ip
         self.port = port
-        print ("Client Thread commencing")
+        print ("New Client Thread started")
 
     def get_roomID(self):
         for chatrm in chatroom_dict:
