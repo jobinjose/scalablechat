@@ -326,7 +326,8 @@ class Client_Thread(Thread):
                         self.socket.send(str(msg_from_client).encode())
         print("Out of while loop")
         sys.exit()
-        #sys.exit()
+        print("still there")
+
 
 buff_size = 2048
 lock = threading.Lock()
