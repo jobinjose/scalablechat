@@ -203,7 +203,7 @@ class Client_Thread(Thread):
             elif "KILL_SERVICE" in msg_from_client:
                 print("got kill request")
                 tcp_socket.close()
-                sys.exit(0)
+                break
 
 
             elif "DISCONNECT" in msg_from_client:
