@@ -218,7 +218,7 @@ class Client_Thread(Thread):
             elif "KILL_SERVICE" in msg_from_client:
                 print("got kill request")
                 tcp_socket.close()
-                break;
+                break
 
             elif "DISCONNECT" in msg_from_client:
                 print("Message : ", msg_from_client)
@@ -325,7 +325,7 @@ class Client_Thread(Thread):
                     if len(msg_from_client)>0:
                         self.socket.send(str(msg_from_client).encode())
         print("Out of while loop")
-        sys.exit()
+        #sys.exit()
         print("still there")
 
 
