@@ -235,9 +235,7 @@ class Client_Thread(Thread):
                     disconnect_message_format = "CHAT: "+str(dr)+ "\nCLIENT_NAME: "+str(disconnect_client_name) + "\nMESSAGE: "+str(message)+"\n\n"
                     allusers_in_room = self.get_users_in_room_chat_conv(dr)
                     print("allusers_in_room",allusers_in_room)
-                    #self.socket.send(disconnect_message_format.encode())
                     lock.acquire()
-                    #del send_queues[self.socket.fileno()]
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
                         #print("userid : ",user_id)
@@ -254,9 +252,6 @@ class Client_Thread(Thread):
                     #print("roomlist_of_disc_client_after delete",roomlist_of_disc_client)
                     self.reduce_roomcount_user_disco(diconnect_joinid)
                     self.delete_user_fileno_leave_disco(dr,diconnect_joinid)
-                    #print(user_room)
-                    #print("Break")
-                #self.socket.send(disconnect_message_format.encode())
 
             elif "LEAVE_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
@@ -340,17 +335,18 @@ tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcp_socket.bind(('',port))
 
-#tcp_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#tcp_socket2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#tcp_socket2.bind(('', port2))
-
 client_threads = []
 while True:
     tcp_socket.listen(6)
 
     print("Server active. Waiting for Clients to join...")
 
-    (client_soc,(client_ip,client_port)) = tcp_socket.accept()
+    try:
+        (client_soc,(client_ip,client_port)) = tcp_socket.accept()
+    except OSError as err:
+        sys.exit()
+
+    #(client_soc,(client_ip,client_port)) = tcp_socket.accept()
     # CLient connected
     no_of_clients_connected = no_of_clients_connected + 1
     print("no : of threads : " + str(no_of_clients_connected))
