@@ -202,7 +202,7 @@ class Client_Thread(Thread):
 
             elif "KILL_SERVICE" in msg_from_client:
                 print("got kill request")
-                #tcp_socket.shutdown(0)
+                tcp_socket.shutdown(0)
                 tcp_socket.close()
                 break
 
@@ -304,7 +304,7 @@ tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcp_socket.bind(('',port))
 
-client_threads = []
+client_thread = []
 while True:
     tcp_socket.listen(6)
 
@@ -312,7 +312,7 @@ while True:
 
     try:
         (client_soc,(client_ip,client_port)) = tcp_socket.accept()
-    except:
+    except OSError as err:
         sys.exit(0)
 
     no_of_clients_connected = no_of_clients_connected + 1
@@ -328,8 +328,3 @@ while True:
     client_thread = Client_Thread(client_soc,client_ip,client_port)
     client_thread.daemon = True
     client_thread.start()
-    client_threads.append(client_thread)
-
-for ct in client_threads:
-    ct.join()
-    print("Reached the END")
