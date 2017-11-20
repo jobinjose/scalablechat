@@ -311,7 +311,7 @@ while True:
 
     try:
         (client_soc,(client_ip,client_port)) = tcp_socket.accept()
-    except OSError as err:
+    except:
         sys.exit(0)
 
     no_of_clients_connected = no_of_clients_connected + 1
