@@ -1,1 +1,1 @@
-python3 chatserver.py $1
+python3 chatserver.py "$1"

@@ -172,7 +172,6 @@ class Client_Thread(Thread):
         #print("Message from Client : " +username+ ":" + msg_from_client)
         #--------------------------------------------------
         while True:
-            print("TRUE")
             msg_from_client=self.socket.recv(buff_size).decode()
             #print("Message from Client : " +self.client_name+ ":" + msg_from_client)
             #print("Message from Client : " +username+ ":" + msg_from_client)
@@ -215,7 +214,7 @@ class Client_Thread(Thread):
                 host_name = socket.gethostname()
                 host_ip = socket.gethostbyname(host_name)
                 host_port = port
-                message = msg_from_client+"IP:"+str(host_ip)+"\nPort:"+str(host_port)+"\nStudentID:17312296\n\n"
+                message = msg_from_client+"IP:"+str(host_ip)+"\nPort:"+str(host_port)+"\nStudentID:17312296"
                 self.socket.send(message.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
