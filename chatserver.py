@@ -96,11 +96,12 @@ class Client_Thread(Thread):
             del roomcount_user[self.join_id]
 
     def reduce_roomcount_user_disco(self,disc_joinid):
-        print("before",roomcount_user[disc_joinid])
-        roomcount_user[disc_joinid] = roomcount_user[disc_joinid] - 1
-        print("after",roomcount_user[disc_joinid])
-        if roomcount_user[disc_joinid] == 0:
-            del roomcount_user[disc_joinid]
+        try:
+            roomcount_user[disc_joinid] = roomcount_user[disc_joinid] - 1
+            if roomcount_user[disc_joinid] == 0:
+                del roomcount_user[disc_joinid]
+        except KeyError:
+            pass
 
     def remove_user_from_room(self):
         user_room[self.room_ref].remove(self.join_id)
@@ -206,7 +207,7 @@ class Client_Thread(Thread):
                 print("Message : ", msg_from_client)
                 msg_split = re.findall(r"[\w']+", msg_from_client)
                 disconnect_client_name = msg_split[5]
-                diconnect_joinid = self.get_clientID_disco(disconnect_client_name)
+                disconnect_joinid = self.get_clientID_disco(disconnect_client_name)
                 roomlist_of_disc_client = self.get_room_user_disco(disconnect_client_name)
                 message = disconnect_client_name + " has disconnected!!!"
                 for dr in roomlist_of_disc_client:
@@ -224,9 +225,9 @@ class Client_Thread(Thread):
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
-                    self.remove_user_from_room_leave_disco(dr,diconnect_joinid)
-                    self.reduce_roomcount_user_disco(diconnect_joinid)
-                    self.delete_user_fileno_leave_disco(dr,diconnect_joinid)
+                    self.remove_user_from_room_leave_disco(dr,disconnect_joinid)
+                    self.reduce_roomcount_user_disco(disconnect_joinid)
+                    self.delete_user_fileno_leave_disco(dr,disconnect_joinid)
 
             elif "LEAVE_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
