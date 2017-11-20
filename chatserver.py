@@ -96,7 +96,9 @@ class Client_Thread(Thread):
             del roomcount_user[self.join_id]
 
     def reduce_roomcount_user_disco(self,disc_joinid):
-        roomcount_user[disc_joinid] = roomcount_user[disc_joinid]-1
+        print(roomcount_user[disc_joinid])
+        roomcount_user[disc_joinid] = roomcount_user[disc_joinid] - 1
+        print(roomcount_user[disc_joinid])
         if roomcount_user[disc_joinid] == 0:
             del roomcount_user[disc_joinid]
 
