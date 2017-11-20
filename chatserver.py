@@ -173,8 +173,6 @@ class Client_Thread(Thread):
         #--------------------------------------------------
         while True:
             msg_from_client=self.socket.recv(buff_size).decode()
-            #print("Message from Client : " +self.client_name+ ":" + msg_from_client)
-            #print("Message from Client : " +username+ ":" + msg_from_client)
             if "JOIN_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
                 msg_split = re.findall(r"[\w']+", msg_from_client)
@@ -218,6 +216,7 @@ class Client_Thread(Thread):
                 self.socket.send(message.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
+                print("got kill request")
                 tcp_socket.close()
                 break;
 
