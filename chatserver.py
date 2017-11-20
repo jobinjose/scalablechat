@@ -219,9 +219,6 @@ class Client_Thread(Thread):
                 self.socket.send(message.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
-                print("Message : ", msg_from_client)
-                message = "HELO "+str(message)+"\nIP:"+str(host_ip)+"\nPort:"+str(host_port)+"\nStudentID:17312296\n\n"
-                self.socket.send(message.encode())
                 tcp_socket.shutdown()
                 tcp_socket.close()
                 break;
@@ -296,36 +293,40 @@ class Client_Thread(Thread):
                 print("Break")
                 #break;
             else:
-                print("Message : ", msg_from_client)
-                message = msg_from_client
-                print("Message : ", message)
-                msg_split = re.findall(r"[\w']+", msg_from_client)
-                print("Split message :", msg_split)
-                conv_client_name = msg_split[5]
-                conv_room_ref = int(msg_split[1])
-                conv_join_id = msg_split[3]
-                conv_message = msg_split[7]
-                for msgsp in msg_split[8:]:
-                    conv_message = conv_message +" "+ msgsp
-                msg = "CHAT: " + str(conv_room_ref) + "\nCLIENT_NAME: " + str(conv_client_name) + "\nMESSAGE: " + str(conv_message) + "\n\n"
-                #print("Room_Ref : ", self.room_ref)
-                #for rr in user_room:
-                #    print(rr)
-                allusers_in_room = self.get_users_in_room_chat_conv(conv_room_ref)
-                #print("user_fileno : ", user_fileno)
-                lock.acquire()
-                Tosend_fileno = []
-                for user_id in allusers_in_room:
-                    #print("userid : ",user_id)
-                    Tosend_fileno.append(self.get_user_fileno_gen(conv_room_ref,user_id))
-                for i, j in zip(send_queues.values(), send_queues):
-                    if j in Tosend_fileno:
-                        i.put(msg)
-                lock.release()
-                for ts in Tosend_fileno:
-                    self.broadcast(ts)
-                #self.socket.send(msg.encode())
-                #print("from thread no : of threads : " + str(no_of_clients_connected))
+                if "CHAT:" in msg_from_client:
+                    print("Message : ", msg_from_client)
+                    message = msg_from_client
+                    print("Message : ", message)
+                    msg_split = re.findall(r"[\w']+", msg_from_client)
+                    print("Split message :", msg_split)
+                    conv_client_name = msg_split[5]
+                    conv_room_ref = int(msg_split[1])
+                    conv_join_id = msg_split[3]
+                    conv_message = msg_split[7]
+                    for msgsp in msg_split[8:]:
+                        conv_message = conv_message +" "+ msgsp
+                    msg = "CHAT: " + str(conv_room_ref) + "\nCLIENT_NAME: " + str(conv_client_name) + "\nMESSAGE: " + str(conv_message) + "\n\n"
+                    #print("Room_Ref : ", self.room_ref)
+                    #for rr in user_room:
+                    #    print(rr)
+                    allusers_in_room = self.get_users_in_room_chat_conv(conv_room_ref)
+                    #print("user_fileno : ", user_fileno)
+                    lock.acquire()
+                    Tosend_fileno = []
+                    for user_id in allusers_in_room:
+                        #print("userid : ",user_id)
+                        Tosend_fileno.append(self.get_user_fileno_gen(conv_room_ref,user_id))
+                    for i, j in zip(send_queues.values(), send_queues):
+                        if j in Tosend_fileno:
+                            i.put(msg)
+                    lock.release()
+                    for ts in Tosend_fileno:
+                        self.broadcast(ts)
+                    #self.socket.send(msg.encode())
+                    #print("from thread no : of threads : " + str(no_of_clients_connected))
+                else:
+                    if len(msg_from_client)>0:
+                        self.socket.send(str(msg_from_client).encode())
         print("Out of while loop")
         sys.exit()
         #sys.exit()
