@@ -159,7 +159,10 @@ class Client_Thread(Thread):
         username = "<" + client_ip + "," + str(client_port) + ">"
         print("from thread no : of threads : " + str(no_of_clients_connected))
         while True:
-            msg_from_client=self.socket.recv(buff_size).decode()
+            try:
+                msg_from_client=self.socket.recv(buff_size).decode()
+            except ConnectionResetError:
+                pass
             if "JOIN_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
                 msg_split = re.findall(r"[\w']+", msg_from_client)
