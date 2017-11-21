@@ -1,1 +1,1 @@
-echo "Compilation completed..."
+echo "Compilation done..."

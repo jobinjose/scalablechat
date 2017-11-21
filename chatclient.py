@@ -7,7 +7,6 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # get local machine name
 host = socket.gethostname()
 
-
 port = 9999
 
 # connection to hostname on the port.
@@ -68,10 +67,10 @@ ip = sys.argv[1]
 port = int(sys.argv[2])
 port2 = 125
 server_threads = []
-chatroom = input("Enter the chatroom : ")
+chatroom = input("Enter the chatroom: ")
 client_ip = 0
 client_port = 0
-client_name = input("Enter the username : ")
+client_name = input("Enter the username: ")
 socket1 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket1.connect((ip, port))
 
@@ -80,7 +79,7 @@ socket1.connect((ip, port))
 #socket2.connect((ip, port2))
 
 msg_from_server=socket1.recv(buff_size).decode()
-print("Message from Server is : " + msg_from_server)
+print("Message from Server is: " + msg_from_server)
 
 server_thread = Server_Thread(socket1,chatroom,client_name,client_ip,client_port)
 server_thread.daemon = True

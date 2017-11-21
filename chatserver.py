@@ -6,14 +6,12 @@ from threading import Thread
 import re
 import random
 
-no_of_clients_connected = 0
-chatroom_dict = {}
-user_dict = {}
+no_of_clients = 0
+user_rnum = {}
+user_roomcount = {}
 user_room = {}
-roomcount_user = {}
-room_user = {}
-user_fileno = {}
-send_queue_fileno_client = {}
+chatroom_db = {}
+user_db = {}
 
 class Client_Thread(Thread):
     def __init__(self,socket,ip,port):
@@ -26,106 +24,106 @@ class Client_Thread(Thread):
         print ("New Client Thread started")
 
     def get_roomID(self):
-        for chatrm in chatroom_dict:
+        for chatrm in chatroom_db:
             if chatrm == self.chatroom:
-                return chatroom_dict[self.chatroom]
-        value = len(chatroom_dict)+1
-        chatroom_dict[self.chatroom.lower()]=value
+                return chatroom_db[self.chatroom]
+        value = len(chatroom_db)+1
+        chatroom_db[self.chatroom.lower()]=value
         return value
     def get_roomID_join(self,chat_chatroom):
-        for chatrm in chatroom_dict:
+        for chatrm in chatroom_db:
             if chatrm == chat_chatroom:
-                return chatroom_dict[chat_chatroom]
-        value = len(chatroom_dict)+1
-        chatroom_dict[chat_chatroom.lower()]=value
+                return chatroom_db[chat_chatroom]
+        value = len(chatroom_db)+1
+        chatroom_db[chat_chatroom.lower()]=value
         return value
 
     def get_clientID(self):
-        for id in user_dict:
+        for id in user_db:
             if id == self.client_name:
-                return user_dict[self.client_name]
+                return user_db[self.client_name]
         return self.set_clientID()
 
     def get_clientID_disconnect(self,disc_clientname):
-        return user_dict[disc_clientname]
+        return user_db[disc_clientname]
 
     def set_clientID(self):
-        value = len(user_dict)+1
-        user_dict[self.client_name]=value
+        value = len(user_db)+1
+        user_db[self.client_name]=value
         return value
 
-    def set_user_room(self):
-        for room in user_room:
+    def set_user_rnum(self):
+        for room in user_rnum:
             if self.room_ref == room:
-                user_room[self.room_ref].append(self.join_id)
+                user_rnum[self.room_ref].append(self.join_id)
                 return
-        user_room[self.room_ref] = [self.join_id]
-    def set_user_room_chat(self,chat_roomref):
-        for room in user_room:
+        user_rnum[self.room_ref] = [self.join_id]
+    def set_user_rnum_chat(self,chat_roomref):
+        for room in user_rnum:
             if chat_roomref == room:
-                user_room[chat_roomref].append(self.join_id)
+                user_rnum[chat_roomref].append(self.join_id)
                 return
-        user_room[chat_roomref] = [self.join_id]
+        user_rnum[chat_roomref] = [self.join_id]
 
-    def set_roomcount_user(self):
-        for user in roomcount_user:
+    def set_user_roomcount(self):
+        for user in user_roomcount:
             if user == self.join_id:
-                roomcount_user[self.join_id] = roomcount_user[self.join_id]+1
+                user_roomcount[self.join_id] = user_roomcount[self.join_id]+1
                 return
-        roomcount_user[self.join_id] = 1
+        user_roomcount[self.join_id] = 1
 
-    def set_room_user(self,join_roomref):
-        for user in room_user:
+    def set_user_room(self,join_roomref):
+        for user in user_room:
             if user == self.client_name:
-                for room in room_user[self.client_name]:
+                for room in user_room[self.client_name]:
                     if room == join_roomref:
                         return
-                room_user[self.client_name].append(join_roomref)
+                user_room[self.client_name].append(join_roomref)
                 return
-        room_user[self.client_name] = [join_roomref]
+        user_room[self.client_name] = [join_roomref]
 
-    def get_room_user_disconnect(self,disc_client_name):
-        return room_user[disc_client_name]
+    def get_user_room_disconnect(self,disc_client_name):
+        return user_room[disc_client_name]
 
-    def reduce_roomcount_user(self):
-        roomcount_user[self.join_id] = roomcount_user[self.join_id]-1
-        if roomcount_user[self.join_id] == 0:
-            del roomcount_user[self.join_id]
+    def reduce_user_roomcount(self):
+        user_roomcount[self.join_id] = user_roomcount[self.join_id]-1
+        if user_roomcount[self.join_id] == 0:
+            del user_roomcount[self.join_id]
 
     def reduce_roomcount_after_disconnect(self,disc_joinid):
         try:
-            roomcount_user[disc_joinid] = roomcount_user[disc_joinid] - 1
-            if roomcount_user[disc_joinid] == 0:
-                del roomcount_user[disc_joinid]
+            user_roomcount[disc_joinid] = user_roomcount[disc_joinid] - 1
+            if user_roomcount[disc_joinid] == 0:
+                del user_roomcount[disc_joinid]
         except KeyError:
             pass
 
     def remove_user_from_room_leave(self,leave_roomref):
-        user_room[leave_roomref].remove(self.join_id)
+        user_rnum[leave_roomref].remove(self.join_id)
 
-    def remove_user_room_disconnect(self,disc_roomref,disc_joinid):
-        for jid in user_room[disc_roomref]:
+    def remove_user_rnum_disconnect(self,disc_roomref,disc_joinid):
+        for jid in user_rnum[disc_roomref]:
             if jid == disc_joinid:
-                user_room[disc_roomref].remove(disc_joinid)
+                user_rnum[disc_roomref].remove(disc_joinid)
 
     def get_users_in_room(self):
-        return user_room[self.room_ref]
+        return user_rnum[self.room_ref]
 
     def get_users_in_room_chat_conv(self,conv_roomref):
-        return user_room[conv_roomref]
+        return user_rnum[conv_roomref]
 
-    def set_user_fileno_chat(self,chat_roomref):
-        user_fileno[(chat_roomref,self.join_id)] = self.socket.fileno()
+    def set_user_filenum_desc_chat(self,chat_roomref):
+        user_filenum_desc[(chat_roomref,self.join_id)] = self.socket.fileno()
 
-    def get_user_fileno_gen(self, gen_roomref, other_join_id):
-        return user_fileno[(gen_roomref,other_join_id)]
+    def get_user_filenum_desc_gen(self, gen_roomref, other_join_id):
+        return user_filenum_desc[(gen_roomref,other_join_id)]
 
-    def delete_user_fileno_leave(self,leave_roomref):
-        del user_fileno[(leave_roomref,self.join_id)]
+    def delete_user_filenum_desc_leave(self,leave_roomref):
+        del user_filenum_desc[(leave_roomref,self.join_id)]
 
-    def delete_user_fileno_disconnect(self,disc_roomref,disc_joinid):
+    def delete_user_filenum_desc_disconnect(self,disc_roomref,disc_joinid):
         try:
-            del user_fileno[(disc_roomref,disc_joinid)]
+            del user_filenum_desc[(disc_roomref,disc_joinid)]
         except KeyError as e:
             pass
 
@@ -133,19 +131,19 @@ class Client_Thread(Thread):
         try:
             message = send_queues[file_no].get(False)
             print("Message in Broadcast class : " + message)
-            #print("Broadcast socket: ",send_queue_fileno_client[file_no])
-            send_queue_fileno_client[file_no].send(message.encode())
+            #print("Broadcast socket: ",send_queue_filenum_desc_client[file_no])
+            send_queue_filenum_desc_client[file_no].send(message.encode())
         except queue.Empty:
             message = "No message to broadcast"
         except KeyError as e:
             pass
 
     def broadcast_data(self):
-        send_queue_fileno_client[self.socket.fileno()] = self.socket
+        send_queue_filenum_desc_client[self.socket.fileno()] = self.socket
 
     def run(self):
         username = "<" + client_ip + "," + str(client_port) + ">"
-        print("from thread no : of threads : " + str(no_of_clients_connected))
+        print("from thread no : of threads : " + str(no_of_clients))
         while True:
             try:
                 msg_from_client=self.socket.recv(buff_size).decode()
@@ -158,10 +156,10 @@ class Client_Thread(Thread):
                 self.client_name = msg_split[7]
                 join_room_ref = self.get_roomID_join(join_chatroom)
                 self.join_id = self.get_clientID()
-                self.set_user_room_chat(join_room_ref)
-                self.set_roomcount_user()
-                self.set_room_user(join_room_ref)
-                self.set_user_fileno_chat(join_room_ref)
+                self.set_user_rnum_chat(join_room_ref)
+                self.set_user_roomcount()
+                self.set_user_room(join_room_ref)
+                self.set_user_filenum_desc_chat(join_room_ref)
                 self.broadcast_data()
                 join_msgto_client = "JOINED_CHATROOM: " + str(join_chatroom) + "\nSERVER_IP: "+str(ip)+"\nPORT: "+str(port)+"\nROOM_REF: "+str(join_room_ref)+"\nJOIN_ID: "+str(self.join_id)+"\n"
                 self.socket.send(join_msgto_client.encode())
@@ -171,7 +169,7 @@ class Client_Thread(Thread):
                 lock.acquire()
                 Tosend_fileno = []
                 for user_id in allusers_in_room:
-                    Tosend_fileno.append(self.get_user_fileno_gen(join_room_ref,user_id))
+                    Tosend_fileno.append(self.get_user_filenum_desc_gen(join_room_ref,user_id))
                 for i, j in zip(send_queues.values(), send_queues):
                     if j in Tosend_fileno:
                         i.put(join_message_to_room_format)
@@ -199,7 +197,7 @@ class Client_Thread(Thread):
                 msg_split = re.findall(r"[\w']+", msg_from_client)
                 disconnect_client_name = msg_split[5]
                 disconnect_joinid = self.get_clientID_disconnect(disconnect_client_name)
-                roomlist_of_disc_client = self.get_room_user_disconnect(disconnect_client_name)
+                roomlist_of_disc_client = self.get_user_room_disconnect(disconnect_client_name)
                 message = disconnect_client_name + " has disconnected.."
                 for dr in roomlist_of_disc_client:
                     print("rooms_refs : ",dr)
@@ -208,16 +206,16 @@ class Client_Thread(Thread):
                     lock.acquire()
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
-                        Tosend_fileno.append(self.get_user_fileno_gen(dr,user_id))
+                        Tosend_fileno.append(self.get_user_filenum_desc_gen(dr,user_id))
                     for i, j in zip(send_queues.values(), send_queues):
                         if j in Tosend_fileno:
                             i.put(disconnect_message_format)
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
-                    self.remove_user_room_disconnect(dr,disconnect_joinid)
+                    self.remove_user_rnum_disconnect(dr,disconnect_joinid)
                     self.reduce_roomcount_after_disconnect(disconnect_joinid)
-                    self.delete_user_fileno_disconnect(dr,disconnect_joinid)
+                    self.delete_user_filenum_desc_disconnect(dr,disconnect_joinid)
 
             elif "LEAVE_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
@@ -234,7 +232,7 @@ class Client_Thread(Thread):
                 lock.acquire()
                 Tosend_fileno = []
                 for user_id in allusers_in_room:
-                    Tosend_fileno.append(self.get_user_fileno_gen(leave_room_ref,user_id))
+                    Tosend_fileno.append(self.get_user_filenum_desc_gen(leave_room_ref,user_id))
                 for i, j in zip(send_queues.values(), send_queues):
                     if j in Tosend_fileno:
                         i.put(leave_message_format)
@@ -242,9 +240,9 @@ class Client_Thread(Thread):
                 for ts in Tosend_fileno:
                     self.broadcast(ts)
                 self.remove_user_from_room_leave(leave_room_ref)
-                self.reduce_roomcount_user()
-                self.delete_user_fileno_leave(leave_room_ref)
-                print(user_room)
+                self.reduce_user_roomcount()
+                self.delete_user_filenum_desc_leave(leave_room_ref)
+                print(user_rnum)
                 print("Break")
             else:
                 if "CHAT:" in msg_from_client:
@@ -264,13 +262,15 @@ class Client_Thread(Thread):
                     lock.acquire()
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
-                        Tosend_fileno.append(self.get_user_fileno_gen(conv_room_ref,user_id))
+                        Tosend_fileno.append(self.get_user_filenum_desc_gen(conv_room_ref,user_id))
                     for i, j in zip(send_queues.values(), send_queues):
                         if j in Tosend_fileno:
                             i.put(msg)
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
+user_filenum_desc = {}
+send_queue_filenum_desc_client = {}
 buff_size = 2048
 lock = threading.Lock()
 send_queues = {}
@@ -288,8 +288,8 @@ while True:
         (client_soc,(client_ip,client_port)) = tcp_socket.accept()
     except OSError as err:
         sys.exit(0)
-    no_of_clients_connected = no_of_clients_connected + 1
-    print("Number of threads: " + str(no_of_clients_connected))
+    no_of_clients = no_of_clients + 1
+    print("Number of threads: " + str(no_of_clients))
     q = queue.Queue()
     lock.acquire()
     send_queues[client_soc.fileno()] = q
