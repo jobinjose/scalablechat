@@ -190,7 +190,6 @@ class Client_Thread(Thread):
                 print("Got kill request. Server shutting down...")
                 tcp_socket.shutdown(0)
                 tcp_socket.close()
-                print("Server shut down. Goodbye!")
                 break
 
             elif "DISCONNECT" in msg_from_client:
