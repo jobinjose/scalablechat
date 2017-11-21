@@ -201,7 +201,7 @@ class Client_Thread(Thread):
                 self.socket.send(message.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
-                print("Got kill request from ", client_name, ". Server shutting down...")
+                print("Got kill request from ", self.client_name, ". Server shutting down...")
                 tcp_socket.shutdown(0)
                 tcp_socket.close()
                 break
