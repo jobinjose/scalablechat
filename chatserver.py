@@ -46,7 +46,7 @@ class Client_Thread(Thread):
                 return user_dict[self.client_name]
         return self.set_clientID()
 
-    def get_clientID_disco(self,disc_clientname):
+    def get_clientID_disconnect(self,disc_clientname):
         return user_dict[disc_clientname]
 
     def set_clientID(self):
@@ -84,10 +84,7 @@ class Client_Thread(Thread):
                 return
         room_user[self.client_name] = [join_roomref]
 
-    def remove_room_user_dico(self,disc_roomref):
-        room_user[self.client_name].remove(disc_roomref)
-
-    def get_room_user_disco(self,disc_client_name):
+    def get_room_user_disconnect(self,disc_client_name):
         return room_user[disc_client_name]
 
     def reduce_roomcount_user(self):
@@ -95,7 +92,7 @@ class Client_Thread(Thread):
         if roomcount_user[self.join_id] == 0:
             del roomcount_user[self.join_id]
 
-    def reduce_roomcount_user_disco(self,disc_joinid):
+    def reduce_roomcount_after_disconnect(self,disc_joinid):
         try:
             roomcount_user[disc_joinid] = roomcount_user[disc_joinid] - 1
             if roomcount_user[disc_joinid] == 0:
@@ -103,12 +100,10 @@ class Client_Thread(Thread):
         except KeyError:
             pass
 
-    def remove_user_from_room(self):
-        user_room[self.room_ref].remove(self.join_id)
     def remove_user_from_room_leave(self,leave_roomref):
         user_room[leave_roomref].remove(self.join_id)
 
-    def remove_user_from_room_leave_disco(self,disc_roomref,disc_joinid):
+    def remove_user_room_disconnect(self,disc_roomref,disc_joinid):
         for jid in user_room[disc_roomref]:
             if jid == disc_joinid:
                 user_room[disc_roomref].remove(disc_joinid)
@@ -119,22 +114,16 @@ class Client_Thread(Thread):
     def get_users_in_room_chat_conv(self,conv_roomref):
         return user_room[conv_roomref]
 
-    def set_user_fileno(self):
-        user_fileno[(self.room_ref,self.join_id)] = self.socket.fileno()
     def set_user_fileno_chat(self,chat_roomref):
         user_fileno[(chat_roomref,self.join_id)] = self.socket.fileno()
 
-    def get_user_fileno(self, other_join_id):
-        return user_fileno[(self.room_ref,other_join_id)]
     def get_user_fileno_gen(self, gen_roomref, other_join_id):
         return user_fileno[(gen_roomref,other_join_id)]
 
-    def delete_user_fileno(self):
-        del user_fileno[(self.room_ref,self.join_id)]
     def delete_user_fileno_leave(self,leave_roomref):
         del user_fileno[(leave_roomref,self.join_id)]
 
-    def delete_user_fileno_leave_disco(self,disc_roomref,disc_joinid):
+    def delete_user_fileno_disconnect(self,disc_roomref,disc_joinid):
         try:
             del user_fileno[(disc_roomref,disc_joinid)]
         except KeyError as e:
@@ -153,7 +142,6 @@ class Client_Thread(Thread):
 
     def broadcast_data(self):
         send_queue_fileno_client[self.socket.fileno()] = self.socket
-
 
     def run(self):
         username = "<" + client_ip + "," + str(client_port) + ">"
@@ -201,24 +189,22 @@ class Client_Thread(Thread):
                 self.socket.send(message.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
-                print("Got kill request from ", self.client_name, ". Server shutting down...")
+                print("Got kill request. Server shutting down...")
                 tcp_socket.shutdown(0)
                 tcp_socket.close()
                 break
-
 
             elif "DISCONNECT" in msg_from_client:
                 print("Message : ", msg_from_client)
                 msg_split = re.findall(r"[\w']+", msg_from_client)
                 disconnect_client_name = msg_split[5]
-                disconnect_joinid = self.get_clientID_disco(disconnect_client_name)
-                roomlist_of_disc_client = self.get_room_user_disco(disconnect_client_name)
+                disconnect_joinid = self.get_clientID_disconnect(disconnect_client_name)
+                roomlist_of_disc_client = self.get_room_user_disconnect(disconnect_client_name)
                 message = disconnect_client_name + " has disconnected.."
                 for dr in roomlist_of_disc_client:
                     print("rooms_refs : ",dr)
                     disconnect_message_format = "CHAT: "+str(dr)+ "\nCLIENT_NAME: "+str(disconnect_client_name) + "\nMESSAGE: "+str(message)+"\n\n"
                     allusers_in_room = self.get_users_in_room_chat_conv(dr)
-                    print("allusers_in_room",allusers_in_room)
                     lock.acquire()
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
@@ -229,9 +215,9 @@ class Client_Thread(Thread):
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
-                    self.remove_user_from_room_leave_disco(dr,disconnect_joinid)
-                    self.reduce_roomcount_user_disco(disconnect_joinid)
-                    self.delete_user_fileno_leave_disco(dr,disconnect_joinid)
+                    self.remove_user_room_disconnect(dr,disconnect_joinid)
+                    self.reduce_roomcount_after_disconnect(disconnect_joinid)
+                    self.delete_user_fileno_disconnect(dr,disconnect_joinid)
 
             elif "LEAVE_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
@@ -240,7 +226,6 @@ class Client_Thread(Thread):
                 leave_client_name = msg_split[5]
                 leave_room_ref = int(msg_split[1])
                 leave_join_id = msg_split[3]
-
                 msg = "LEFT_CHATROOM: " + str(leave_room_ref) + "\nJOIN_ID: " + str(leave_join_id)+"\n"
                 self.socket.send(msg.encode())
                 message = leave_client_name + " has left this chatroom.."
@@ -291,7 +276,6 @@ lock = threading.Lock()
 send_queues = {}
 ip = '0.0.0.0'
 port = int(sys.argv[1])
-port2 = 5100
 tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcp_socket.bind(('',port))
@@ -299,24 +283,18 @@ tcp_socket.bind(('',port))
 client_thread = []
 while True:
     tcp_socket.listen(6)
-
     print("Server up and running. Waiting for Clients to join...")
-
     try:
         (client_soc,(client_ip,client_port)) = tcp_socket.accept()
     except OSError as err:
         sys.exit(0)
-
     no_of_clients_connected = no_of_clients_connected + 1
-    print("number of threads: " + str(no_of_clients_connected))
+    print("Number of threads: " + str(no_of_clients_connected))
     q = queue.Queue()
     lock.acquire()
-
     send_queues[client_soc.fileno()] = q
     lock.release()
-
     print("<" + client_ip + "," + str(client_port) + "> connected")
-
     client_thread = Client_Thread(client_soc,client_ip,client_port)
     client_thread.daemon = True
     client_thread.start()
