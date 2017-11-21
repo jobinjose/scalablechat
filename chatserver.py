@@ -1,17 +1,10 @@
 import socket
 import sys
+import re
+import random
 import queue
 import threading
 from threading import Thread
-import re
-import random
-
-no_of_clients = 0
-user_rnum = {}
-user_roomcount = {}
-user_room = {}
-chatroom_db = {}
-user_db = {}
 
 class Client_Thread(Thread):
     def __init__(self,socket,ip,port):
@@ -129,9 +122,8 @@ class Client_Thread(Thread):
 
     def broadcast(self,file_no):
         try:
-            message = send_queues[file_no].get(False)
+            message = send_que[file_no].get(False)
             print("Message in Broadcast class : " + message)
-            #print("Broadcast socket: ",send_queue_filenum_desc_client[file_no])
             send_queue_filenum_desc_client[file_no].send(message.encode())
         except queue.Empty:
             message = "No message to broadcast"
@@ -170,7 +162,7 @@ class Client_Thread(Thread):
                 Tosend_fileno = []
                 for user_id in allusers_in_room:
                     Tosend_fileno.append(self.get_user_filenum_desc_gen(join_room_ref,user_id))
-                for i, j in zip(send_queues.values(), send_queues):
+                for i, j in zip(send_que.values(), send_que):
                     if j in Tosend_fileno:
                         i.put(join_message_to_room_format)
                 lock.release()
@@ -207,7 +199,7 @@ class Client_Thread(Thread):
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
                         Tosend_fileno.append(self.get_user_filenum_desc_gen(dr,user_id))
-                    for i, j in zip(send_queues.values(), send_queues):
+                    for i, j in zip(send_que.values(), send_que):
                         if j in Tosend_fileno:
                             i.put(disconnect_message_format)
                     lock.release()
@@ -233,7 +225,7 @@ class Client_Thread(Thread):
                 Tosend_fileno = []
                 for user_id in allusers_in_room:
                     Tosend_fileno.append(self.get_user_filenum_desc_gen(leave_room_ref,user_id))
-                for i, j in zip(send_queues.values(), send_queues):
+                for i, j in zip(send_que.values(), send_que):
                     if j in Tosend_fileno:
                         i.put(leave_message_format)
                 lock.release()
@@ -263,17 +255,23 @@ class Client_Thread(Thread):
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
                         Tosend_fileno.append(self.get_user_filenum_desc_gen(conv_room_ref,user_id))
-                    for i, j in zip(send_queues.values(), send_queues):
+                    for i, j in zip(send_que.values(), send_que):
                         if j in Tosend_fileno:
                             i.put(msg)
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
+no_of_clients = 0
+user_rnum = {}
+user_roomcount = {}
+user_room = {}
+chatroom_db = {}
+user_db = {}
 user_filenum_desc = {}
 send_queue_filenum_desc_client = {}
 buff_size = 2048
 lock = threading.Lock()
-send_queues = {}
+send_que = {}
 ip = '0.0.0.0'
 port = int(sys.argv[1])
 tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -292,7 +290,7 @@ while True:
     print("Number of threads: " + str(no_of_clients))
     q = queue.Queue()
     lock.acquire()
-    send_queues[client_soc.fileno()] = q
+    send_que[client_soc.fileno()] = q
     lock.release()
     print("<" + client_ip + "," + str(client_port) + "> connected")
     client_thread = Client_Thread(client_soc,client_ip,client_port)
