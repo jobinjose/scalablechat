@@ -201,7 +201,7 @@ class Client_Thread(Thread):
                 self.socket.send(message.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
-                print("got kill request")
+                print("Got kill request from ", client_name, ". Server shutting down...")
                 tcp_socket.shutdown(0)
                 tcp_socket.close()
                 break
@@ -286,20 +286,12 @@ class Client_Thread(Thread):
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
-                """else:
-                    if len(msg_from_client)>0:
-                        self.socket.send(str(msg_from_client).encode())"""
-        print("Out of while loop")
-        #sys.exit()
-        print("still there")
-
-
 buff_size = 2048
 lock = threading.Lock()
 send_queues = {}
 ip = '0.0.0.0'
 port = int(sys.argv[1])
-port2 = 5000
+port2 = 5100
 tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcp_socket.bind(('',port))
@@ -308,7 +300,7 @@ client_thread = []
 while True:
     tcp_socket.listen(6)
 
-    print("Server active. Waiting for Clients to join...")
+    print("Server up and running. Waiting for Clients to join...")
 
     try:
         (client_soc,(client_ip,client_port)) = tcp_socket.accept()
@@ -316,7 +308,7 @@ while True:
         sys.exit(0)
 
     no_of_clients_connected = no_of_clients_connected + 1
-    print("no : of threads : " + str(no_of_clients_connected))
+    print("number of threads: " + str(no_of_clients_connected))
     q = queue.Queue()
     lock.acquire()
 
