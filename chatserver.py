@@ -286,9 +286,9 @@ class Client_Thread(Thread):
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
-                else:
+                """else:
                     if len(msg_from_client)>0:
-                        self.socket.send(str(msg_from_client).encode())
+                        self.socket.send(str(msg_from_client).encode())"""
         print("Out of while loop")
         #sys.exit()
         print("still there")
