@@ -236,31 +236,30 @@ class Client_Thread(Thread):
                 self.delete_user_filenum_desc_leave(leave_room_ref)
                 print(user_rnum)
                 print("Break")
-            else:
-                if "CHAT:" in msg_from_client:
-                    print("Message : ", msg_from_client)
-                    message = msg_from_client
-                    print("Message : ", message)
-                    msg_split = re.findall(r"[\w']+", msg_from_client)
-                    print("Split message :", msg_split)
-                    conv_client_name = msg_split[5]
-                    conv_room_ref = int(msg_split[1])
-                    conv_join_id = msg_split[3]
-                    conv_message = msg_split[7]
-                    for msgsp in msg_split[8:]:
-                        conv_message = conv_message +" "+ msgsp
-                    msg = "CHAT: " + str(conv_room_ref) + "\nCLIENT_NAME: " + str(conv_client_name) + "\nMESSAGE: " + str(conv_message) + "\n\n"
-                    allusers_in_room = self.get_users_in_room_chat_conv(conv_room_ref)
-                    lock.acquire()
-                    Tosend_fileno = []
-                    for user_id in allusers_in_room:
-                        Tosend_fileno.append(self.get_user_filenum_desc_gen(conv_room_ref,user_id))
-                    for i, j in zip(send_que.values(), send_que):
-                        if j in Tosend_fileno:
-                            i.put(msg)
-                    lock.release()
-                    for ts in Tosend_fileno:
-                        self.broadcast(ts)
+            elif "CHAT:" in msg_from_client:
+                print("Message : ", msg_from_client)
+                message = msg_from_client
+                print("Message : ", message)
+                msg_split = re.findall(r"[\w']+", msg_from_client)
+                print("Split message :", msg_split)
+                conv_client_name = msg_split[5]
+                conv_room_ref = int(msg_split[1])
+                conv_join_id = msg_split[3]
+                conv_message = msg_split[7]
+                for msgsp in msg_split[8:]:
+                    conv_message = conv_message +" "+ msgsp
+                msg = "CHAT: " + str(conv_room_ref) + "\nCLIENT_NAME: " + str(conv_client_name) + "\nMESSAGE: " + str(conv_message) + "\n\n"
+                allusers_in_room = self.get_users_in_room_chat_conv(conv_room_ref)
+                lock.acquire()
+                Tosend_fileno = []
+                for user_id in allusers_in_room:
+                    Tosend_fileno.append(self.get_user_filenum_desc_gen(conv_room_ref,user_id))
+                for i, j in zip(send_que.values(), send_que):
+                    if j in Tosend_fileno:
+                        i.put(msg)
+                lock.release()
+                for ts in Tosend_fileno:
+                    self.broadcast(ts)
 no_of_clients = 0
 user_rnum = {}
 user_roomcount = {}
