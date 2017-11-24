@@ -14,7 +14,6 @@ class Client_Thread(Thread):
         self.port = port
         self.client_name = ''
         self.join_id = 0
-        print ("New Client Thread started")
 
     def get_roomID(self):
         for chatrm in chatroom_db:
@@ -123,7 +122,7 @@ class Client_Thread(Thread):
     def broadcast(self,file_no):
         try:
             message = send_que[file_no].get(False)
-            print("Message in Broadcast class : " + message)
+            print("Message to be broadcast: " + message)
             send_queue_filenum_desc_client[file_no].send(message.encode())
         except queue.Empty:
             message = "No message to broadcast"
@@ -134,15 +133,13 @@ class Client_Thread(Thread):
         send_queue_filenum_desc_client[self.socket.fileno()] = self.socket
 
     def run(self):
-        username = "<" + client_ip + "," + str(client_port) + ">"
-        print("from thread no : of threads : " + str(no_of_clients))
+        #loop for each message from client
         while True:
             try:
                 msg_from_client=self.socket.recv(buff_size).decode()
             except ConnectionResetError:
                 pass
             if "JOIN_CHATROOM" in msg_from_client:
-                print("Message : ", msg_from_client)
                 msg_split = re.findall(r"[\w']+", msg_from_client)
                 join_chatroom = msg_split[1]
                 self.client_name = msg_split[7]
@@ -170,8 +167,6 @@ class Client_Thread(Thread):
                     self.broadcast(ts)
             elif "HELO" in msg_from_client:
                 print("Message : ", msg_from_client)
-                msg_split = re.findall(r"[\w']+", msg_from_client)
-                message = msg_split[1]
                 host_name = socket.gethostname()
                 host_ip = socket.gethostbyname(host_name)
                 host_port = port
@@ -212,7 +207,6 @@ class Client_Thread(Thread):
             elif "LEAVE_CHATROOM" in msg_from_client:
                 print("Message : ", msg_from_client)
                 msg_split = re.findall(r"[\w']+", msg_from_client)
-                print("Split message :", msg_split)
                 leave_client_name = msg_split[5]
                 leave_room_ref = int(msg_split[1])
                 leave_join_id = msg_split[3]
