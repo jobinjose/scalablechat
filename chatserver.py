@@ -293,6 +293,7 @@ tcp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 tcp_socket.bind(('',port))
 
 client_thread = []
+#main loop to create new thread
 while True:
     tcp_socket.listen(6)
     print("Server up and running. Waiting for Clients to join...")
