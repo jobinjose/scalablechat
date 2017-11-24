@@ -242,8 +242,6 @@ class Client_Thread(Thread):
                     self.remove_user_from_room_leave(leave_room_ref)
                     self.reduce_user_roomcount()
                     self.delete_user_filenum_desc_leave(leave_room_ref)
-                    print(user_rnum)
-                    print("Break")
                 except:
                     err_msgto_client = "ERROR_CODE: 104"+"\nERROR_DESCRIPTION: "+str(sys.exec_info()[0])+"\n"
                     self.socket.send(err_msgto_client.encode())
