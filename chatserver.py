@@ -140,38 +140,47 @@ class Client_Thread(Thread):
             except ConnectionResetError:
                 pass
             if "JOIN_CHATROOM" in msg_from_client:
-                msg_split = re.findall(r"[\w']+", msg_from_client)
-                join_chatroom = msg_split[1]
-                self.client_name = msg_split[7]
-                join_room_ref = self.get_roomID_join(join_chatroom)
-                self.join_id = self.get_clientID()
-                self.set_user_rnum_chat(join_room_ref)
-                self.set_user_roomcount()
-                self.set_user_room(join_room_ref)
-                self.set_user_filenum_desc_chat(join_room_ref)
-                self.broadcast_data()
-                join_msgto_client = "JOINED_CHATROOM: " + str(join_chatroom) + "\nSERVER_IP: "+str(ip)+"\nPORT: "+str(port)+"\nROOM_REF: "+str(join_room_ref)+"\nJOIN_ID: "+str(self.join_id)+"\n"
-                self.socket.send(join_msgto_client.encode())
-                allusers_in_room = self.get_users_in_room_chat_conv(join_room_ref)
-                join_message_to_room = str(self.client_name) + " has joined this chatroom\n"
-                join_message_to_room_format = "CHAT: "+ str(join_room_ref) + "\nCLIENT_NAME: "+str(self.client_name) + "\nMESSAGE: "+str(join_message_to_room)+"\n"
-                lock.acquire()
-                Tosend_fileno = []
-                for user_id in allusers_in_room:
-                    Tosend_fileno.append(self.get_user_filenum_desc_gen(join_room_ref,user_id))
-                for i, j in zip(send_que.values(), send_que):
-                    if j in Tosend_fileno:
-                        i.put(join_message_to_room_format)
-                lock.release()
-                for ts in Tosend_fileno:
-                    self.broadcast(ts)
+                try:
+                    msg_split = re.findall(r"[\w']+", msg_from_client)
+                    join_chatroom = msg_split[1]
+                    self.client_name = msg_split[7]
+                    join_room_ref = self.get_roomID_join(join_chatroom)
+                    self.join_id = self.get_clientID()
+                    self.set_user_rnum_chat(join_room_ref)
+                    self.set_user_roomcount()
+                    self.set_user_room(join_room_ref)
+                    self.set_user_filenum_desc_chat(join_room_ref)
+                    self.broadcast_data()
+                    join_msgto_client = "JOINED_CHATROOM: " + str(join_chatroom) + "\nSERVER_IP: "+str(ip)+"\nPORT: "+str(port)+"\nROOM_REF: "+str(join_room_ref)+"\nJOIN_ID: "+str(self.join_id)+"\n"
+                    self.socket.send(join_msgto_client.encode())
+                    allusers_in_room = self.get_users_in_room_chat_conv(join_room_ref)
+                    join_message_to_room = str(self.client_name) + " has joined this chatroom\n"
+                    join_message_to_room_format = "CHAT: "+ str(join_room_ref) + "\nCLIENT_NAME: "+str(self.client_name) + "\nMESSAGE: "+str(join_message_to_room)+"\n"
+                    lock.acquire()
+                    Tosend_fileno = []
+                    for user_id in allusers_in_room:
+                        Tosend_fileno.append(self.get_user_filenum_desc_gen(join_room_ref,user_id))
+                    for i, j in zip(send_que.values(), send_que):
+                        if j in Tosend_fileno:
+                            i.put(join_message_to_room_format)
+                    lock.release()
+                    for ts in Tosend_fileno:
+                        self.broadcast(ts)
+                except:
+                    err_msgto_client = "ERROR_CODE: 101"+"\nERROR_DESCRIPTION: "+str(sys.exec_info()[0])+"\n"
+                    self.socket.send(err_msgto_client.encode())
+
             elif "HELO" in msg_from_client:
-                print("Message : ", msg_from_client)
-                host_name = socket.gethostname()
-                host_ip = socket.gethostbyname(host_name)
-                host_port = port
-                message = msg_from_client+"IP:"+str(host_ip)+"\nPort:"+str(host_port)+"\nStudentID:17312296"
-                self.socket.send(message.encode())
+                try:
+                    print("Message : ", msg_from_client)
+                    host_name = socket.gethostname()
+                    host_ip = socket.gethostbyname(host_name)
+                    host_port = port
+                    message = msg_from_client+"IP:"+str(host_ip)+"\nPort:"+str(host_port)+"\nStudentID:17312296"
+                    self.socket.send(message.encode())
+                except:
+                    err_msgto_client = "ERROR_CODE: 102"+"\nERROR_DESCRIPTION: "+str(sys.exec_info()[0])+"\n"
+                    self.socket.send(err_msgto_client.encode())
 
             elif "KILL_SERVICE" in msg_from_client:
                 print("Got kill request. Server shutting down...")
@@ -180,80 +189,92 @@ class Client_Thread(Thread):
                 break
 
             elif "DISCONNECT" in msg_from_client:
-                print("Message : ", msg_from_client)
-                msg_split = re.findall(r"[\w']+", msg_from_client)
-                disconnect_client_name = msg_split[5]
-                disconnect_joinid = self.get_clientID_disconnect(disconnect_client_name)
-                roomlist_of_disc_client = self.get_user_room_disconnect(disconnect_client_name)
-                message = disconnect_client_name + " has disconnected.."
-                for dr in roomlist_of_disc_client:
-                    print("rooms_refs : ",dr)
-                    disconnect_message_format = "CHAT: "+str(dr)+ "\nCLIENT_NAME: "+str(disconnect_client_name) + "\nMESSAGE: "+str(message)+"\n\n"
-                    allusers_in_room = self.get_users_in_room_chat_conv(dr)
+                try:
+                    print("Message : ", msg_from_client)
+                    msg_split = re.findall(r"[\w']+", msg_from_client)
+                    disconnect_client_name = msg_split[5]
+                    disconnect_joinid = self.get_clientID_disconnect(disconnect_client_name)
+                    roomlist_of_disc_client = self.get_user_room_disconnect(disconnect_client_name)
+                    message = disconnect_client_name + " has disconnected.."
+                    for dr in roomlist_of_disc_client:
+                        print("rooms_refs : ",dr)
+                        disconnect_message_format = "CHAT: "+str(dr)+ "\nCLIENT_NAME: "+str(disconnect_client_name) + "\nMESSAGE: "+str(message)+"\n\n"
+                        allusers_in_room = self.get_users_in_room_chat_conv(dr)
+                        lock.acquire()
+                        Tosend_fileno = []
+                        for user_id in allusers_in_room:
+                            Tosend_fileno.append(self.get_user_filenum_desc_gen(dr,user_id))
+                        for i, j in zip(send_que.values(), send_que):
+                            if j in Tosend_fileno:
+                                i.put(disconnect_message_format)
+                        lock.release()
+                        for ts in Tosend_fileno:
+                            self.broadcast(ts)
+                        self.remove_user_rnum_disconnect(dr,disconnect_joinid)
+                        self.reduce_roomcount_after_disconnect(disconnect_joinid)
+                        self.delete_user_filenum_desc_disconnect(dr,disconnect_joinid)
+                except:
+                    err_msgto_client = "ERROR_CODE: 103"+"\nERROR_DESCRIPTION: "+str(sys.exec_info()[0])+"\n"
+                    self.socket.send(err_msgto_client.encode())
+
+            elif "LEAVE_CHATROOM" in msg_from_client:
+                try:
+                    print("Message : ", msg_from_client)
+                    msg_split = re.findall(r"[\w']+", msg_from_client)
+                    leave_client_name = msg_split[5]
+                    leave_room_ref = int(msg_split[1])
+                    leave_join_id = msg_split[3]
+                    msg = "LEFT_CHATROOM: " + str(leave_room_ref) + "\nJOIN_ID: " + str(leave_join_id)+"\n"
+                    self.socket.send(msg.encode())
+                    message = leave_client_name + " has left this chatroom.."
+                    leave_message_format = "CHAT: "+ str(leave_room_ref) + "\nCLIENT_NAME: "+str(leave_client_name) + "\nMESSAGE: "+str(message)+"\n\n"
+                    allusers_in_room = self.get_users_in_room_chat_conv(leave_room_ref)
                     lock.acquire()
                     Tosend_fileno = []
                     for user_id in allusers_in_room:
-                        Tosend_fileno.append(self.get_user_filenum_desc_gen(dr,user_id))
+                        Tosend_fileno.append(self.get_user_filenum_desc_gen(leave_room_ref,user_id))
                     for i, j in zip(send_que.values(), send_que):
                         if j in Tosend_fileno:
-                            i.put(disconnect_message_format)
+                            i.put(leave_message_format)
                     lock.release()
                     for ts in Tosend_fileno:
                         self.broadcast(ts)
-                    self.remove_user_rnum_disconnect(dr,disconnect_joinid)
-                    self.reduce_roomcount_after_disconnect(disconnect_joinid)
-                    self.delete_user_filenum_desc_disconnect(dr,disconnect_joinid)
-
-            elif "LEAVE_CHATROOM" in msg_from_client:
-                print("Message : ", msg_from_client)
-                msg_split = re.findall(r"[\w']+", msg_from_client)
-                leave_client_name = msg_split[5]
-                leave_room_ref = int(msg_split[1])
-                leave_join_id = msg_split[3]
-                msg = "LEFT_CHATROOM: " + str(leave_room_ref) + "\nJOIN_ID: " + str(leave_join_id)+"\n"
-                self.socket.send(msg.encode())
-                message = leave_client_name + " has left this chatroom.."
-                leave_message_format = "CHAT: "+ str(leave_room_ref) + "\nCLIENT_NAME: "+str(leave_client_name) + "\nMESSAGE: "+str(message)+"\n\n"
-                allusers_in_room = self.get_users_in_room_chat_conv(leave_room_ref)
-                lock.acquire()
-                Tosend_fileno = []
-                for user_id in allusers_in_room:
-                    Tosend_fileno.append(self.get_user_filenum_desc_gen(leave_room_ref,user_id))
-                for i, j in zip(send_que.values(), send_que):
-                    if j in Tosend_fileno:
-                        i.put(leave_message_format)
-                lock.release()
-                for ts in Tosend_fileno:
-                    self.broadcast(ts)
-                self.remove_user_from_room_leave(leave_room_ref)
-                self.reduce_user_roomcount()
-                self.delete_user_filenum_desc_leave(leave_room_ref)
-                print(user_rnum)
-                print("Break")
+                    self.remove_user_from_room_leave(leave_room_ref)
+                    self.reduce_user_roomcount()
+                    self.delete_user_filenum_desc_leave(leave_room_ref)
+                    print(user_rnum)
+                    print("Break")
+                except:
+                    err_msgto_client = "ERROR_CODE: 104"+"\nERROR_DESCRIPTION: "+str(sys.exec_info()[0])+"\n"
+                    self.socket.send(err_msgto_client.encode())
             elif "CHAT:" in msg_from_client:
-                print("Message : ", msg_from_client)
-                message = msg_from_client
-                print("Message : ", message)
-                msg_split = re.findall(r"[\w']+", msg_from_client)
-                print("Split message :", msg_split)
-                conv_client_name = msg_split[5]
-                conv_room_ref = int(msg_split[1])
-                conv_join_id = msg_split[3]
-                conv_message = msg_split[7]
-                for msgsp in msg_split[8:]:
-                    conv_message = conv_message +" "+ msgsp
-                msg = "CHAT: " + str(conv_room_ref) + "\nCLIENT_NAME: " + str(conv_client_name) + "\nMESSAGE: " + str(conv_message) + "\n\n"
-                allusers_in_room = self.get_users_in_room_chat_conv(conv_room_ref)
-                lock.acquire()
-                Tosend_fileno = []
-                for user_id in allusers_in_room:
-                    Tosend_fileno.append(self.get_user_filenum_desc_gen(conv_room_ref,user_id))
-                for i, j in zip(send_que.values(), send_que):
-                    if j in Tosend_fileno:
-                        i.put(msg)
-                lock.release()
-                for ts in Tosend_fileno:
-                    self.broadcast(ts)
+                try:
+                    print("Message : ", msg_from_client)
+                    message = msg_from_client
+                    print("Message : ", message)
+                    msg_split = re.findall(r"[\w']+", msg_from_client)
+                    print("Split message :", msg_split)
+                    conv_client_name = msg_split[5]
+                    conv_room_ref = int(msg_split[1])
+                    conv_join_id = msg_split[3]
+                    conv_message = msg_split[7]
+                    for msgsp in msg_split[8:]:
+                        conv_message = conv_message +" "+ msgsp
+                    msg = "CHAT: " + str(conv_room_ref) + "\nCLIENT_NAME: " + str(conv_client_name) + "\nMESSAGE: " + str(conv_message) + "\n\n"
+                    allusers_in_room = self.get_users_in_room_chat_conv(conv_room_ref)
+                    lock.acquire()
+                    Tosend_fileno = []
+                    for user_id in allusers_in_room:
+                        Tosend_fileno.append(self.get_user_filenum_desc_gen(conv_room_ref,user_id))
+                    for i, j in zip(send_que.values(), send_que):
+                        if j in Tosend_fileno:
+                            i.put(msg)
+                    lock.release()
+                    for ts in Tosend_fileno:
+                        self.broadcast(ts)
+                except:
+                    err_msgto_client = "ERROR_CODE: 105"+"\nERROR_DESCRIPTION: "+str(sys.exec_info()[0])+"\n"
+                    self.socket.send(err_msgto_client.encode())
 no_of_clients = 0
 user_rnum = {}
 user_roomcount = {}
